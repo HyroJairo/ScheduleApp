@@ -22,40 +22,39 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.*;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.Date;
 
+/**
+ * This is the log in class. You enter username and password to enter the main menu
+ */
 public class loginController implements Initializable {
+    /**
+     * Labels
+     */
     @FXML
-    private Button loginText;
+    private Label titleText;
+    @FXML
+    private Label zoneID;
 
+    /**
+     * TextFields
+     */
     @FXML
     private TextField userIDText;
-
     @FXML
     private TextField passwordText;
 
+    /**
+     * Buttons
+     */
     @FXML
-    private Label titleText;
+    private Button loginText;
 
-    @FXML
-    private Label zoneID;
 
     //Below these are strings for errors
     private String empty;
     private String incorrect;
-
-
-    /**
-     * This is the login controller constructor
-     */
-    public loginController() {
-        //default constructor
-    }
 
     /**
      * This is the static method for user
@@ -63,39 +62,17 @@ public class loginController implements Initializable {
     public static User user = new User("", "");
 
     /**
-     * This initializes the loginController class
-     * @param url
-     * @param resourceBundle
+     * This initializes the loginController class which you need the correct username and password
+     * to successfully log in. A
+     * @param url the url
+     * @param resourceBundle the resource bundle
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        //This plugs in all the info from the database;
 
         //This figures out the geological issues
         ZoneId id = ZoneId.systemDefault();
         zoneID.setText(id.toString());
-
-        //Getting DateFormat Instance
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        //parsing date from the appointment string
-        Date parsedDateStart = new Date();
-        try {
-            parsedDateStart = dateFormat.parse("2020-05-28 12:00:00");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        Timestamp timestampStart = new java.sql.Timestamp(parsedDateStart.getTime());
-
-        //converts the timestamp to date
-        Date timeDate = new Date(timestampStart.getTime());
-
-        //Setting time for UTC
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        System.out.println(dateFormat.format(timeDate).toString());
-
-        String s = dateFormat.format(timeDate).toString();
-        System.out.println(s);
 
         //This translates the page according the default language of the computer
         resourceBundle = ResourceBundle.getBundle("Properties/login", Locale.getDefault());
@@ -111,9 +88,14 @@ public class loginController implements Initializable {
         }
     }
 
+    /**
+     *
+     * @param event event
+     * @throws IOException an IO exception
+     * @throws SQLException an sql exception
+     */
     @FXML
     void onActionLogin(ActionEvent event) throws IOException, SQLException {
-        boolean correct = false;
 
         //Strings for the username and password
         String str = userIDText.getText().trim();
@@ -125,16 +107,9 @@ public class loginController implements Initializable {
             return;
         }
 
-        //Check if they user exist and if the password matches
-        if(checkUserName()) {
-            correct = checkPassword(getID());
-        }
-
-        //If the username and password are met then this would transport to another page
-        if(correct) {
-            user.setUserID(getID());
-            user.setUserName(userIDText.getText());
-            user.setPassword(passwordText.getText());
+        //checks if either if either the username or password are correct
+        if(checkCredentials()) {
+            //id, name, and password are already been set
             user.setCreatedBy(user.getUserName());
             user.setLastUpdatedBy(user.getUserName());
             FXMLLoader loader = new FXMLLoader(getClass().getResource("../Views/main.fxml"));
@@ -145,80 +120,57 @@ public class loginController implements Initializable {
             Scene scene = new Scene(root);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(scene);
-            //Need to fix the centering later on
             stage.setResizable(false);
             stage.show();
             userActivity(true);
-        } else {
-            infoBoxError(incorrect, "error");
-            userActivity(true);
-        }
+            appointmentIn15();
 
-        //This creates
+        } else {
+            infoBoxError(incorrect, "ERROR");
+            userActivity(false);
+        }
     }
 
-    //This method returns the userID
-    int getID() throws SQLException {
-
+    /**
+     * Checks to see if the credentials are valid
+     * @return true or false
+     * @throws SQLException an SQL exception
+     */
+    public boolean checkCredentials() throws SQLException {
+        //Starts the connection
         Connection con = DBConnection.startConnection();
         //Create statement object
         DBQuery.setStatement(con);
         //Get statement object
         Statement statement = DBQuery.getStatement();
         //Get username
-        String str = userIDText.getText().trim();
-        //SQL statement
-        String sqlStatement = "SELECT User_ID FROM users WHERE User_name = '" + str + "'";
-
+        String name = userIDText.getText().trim();
+        //SQL statement for the id
+        String sqlStatementID = "SELECT User_ID FROM users WHERE User_Name = '" + name + "'";
         //create result set object
-        ResultSet result = statement.executeQuery(sqlStatement);
+        ResultSet resultID = statement.executeQuery(sqlStatementID);
 
-        //creates the id and gets it
+        //assigns an int and checks if the id exists
         int id = -1;
+        while(resultID.next()) { id = resultID.getInt("User_ID"); }
+        if(id == -1) { return false; }
 
-        while(result.next()) {
-            id = result.getInt("User_ID");
-        }
-        return id;
-    }
-
-
-    //This method checks if the username exist
-    boolean checkUserName() throws SQLException {
-
-        if(-1 < getID()) {
-            //Get username
-            String str = userIDText.getText().trim();
-            //Sets name for user
-            user.setUserName(str);
-            return true;
-        }
-       return false;
-    }
-
-    //This method checks if the password to that username is correct
-    boolean checkPassword(int id) throws SQLException {
-
-        //create statement object
-        Statement statement = DBQuery.getStatement();
-
-        //write SQL statement
-        String sqlStatement = "SELECT password FROM users WHERE user_Id = " + id;
-
+        //writes SQL statement for password
+        String sqlStatementPassword = "SELECT password FROM users WHERE User_ID = " + id;
         //create result set object
-        ResultSet result = statement.executeQuery(sqlStatement);
-
-        //Gets the password
+        ResultSet resultPass = statement.executeQuery(sqlStatementPassword);
+        //Gets the password and sees if it matches the one the user typed.
         String password = passwordText.getText().trim();
-        while (result.next()) {
-            if (result.getString("password").equals(password)) {
+        while (resultPass.next()) {
+            if (resultPass.getString("password").equals(password)) {
                 //Sets password for user
+                user.setUserID(id);
+                user.setUserName(name);
                 user.setPassword(password);
                 return true;
             }
         }
         return false;
-
     }
 
     /**
@@ -234,12 +186,27 @@ public class loginController implements Initializable {
     }
 
     /**
-     * This appends the info to the document
+     * This is an infobox for informative
+     *
+     * @param infoMessage the message
+     * @param headerText the header text
+     */
+    public void infoBoxInformation(String infoMessage, String headerText) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(headerText);
+        alert.setContentText(infoMessage);
+        alert.showAndWait();
+    }
+
+    /**
+     * This records a successful or a failure attempt to a txt file
+     * @param authorized a boolean
+     * @throws IOException an IO exception
      */
     public void userActivity(Boolean authorized) throws IOException {
-        FileWriter fw = null;
-        BufferedWriter bw = null;
-        PrintWriter pw = null;
+        FileWriter fw;
+        BufferedWriter bw;
+        PrintWriter pw;
         fw = new FileWriter("login_activity.txt",true);
         bw = new BufferedWriter(fw);
         pw = new PrintWriter(bw);
@@ -254,4 +221,41 @@ public class loginController implements Initializable {
         bw.close();
         fw.close();
     }
+
+    /**
+     * This checks if the user has an appointment within 15 minutes of successfully logging in
+     */
+    public void appointmentIn15() throws SQLException {
+        //Starts the connection
+        Connection con = DBConnection.startConnection();
+        //Create statement object
+        DBQuery.setStatement(con);
+        //Get statement object
+        Statement statement = DBQuery.getStatement();
+
+        //This will show if there's any appointments within 15 minutes of logging in
+        String appointmentIn15 = "SELECT * FROM appointments WHERE Start BETWEEN NOW() AND ADDTIME(NOW(), '00:15:00')" +
+                " AND User_ID=" + user.getUserID();
+        try {
+            ResultSet b  = statement.executeQuery(appointmentIn15);
+
+            String upComing;
+            boolean free = true;
+            if(b.next()) {
+                String id = b.getString(1);
+                String start = b.getString(6);
+                upComing = "You have an upcoming appointment. It's ID is " + id + " and its start date and time is " +
+                        start;
+                if(id.length() > 0) { free = false;}
+                if(!free) {
+                    infoBoxInformation(upComing, "INFO");
+                }
+            }
+            if(free) {
+                infoBoxInformation("You have no appointments", "INFO");
+            }
+
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
 }

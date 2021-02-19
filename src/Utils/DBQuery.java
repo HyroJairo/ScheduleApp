@@ -1,6 +1,4 @@
 package Utils;
-
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,12 +10,19 @@ public class DBQuery {
 
     private static Statement statement;
 
-    //Creating Statement Object
+    /**
+     * Creating the statement object
+     * @param connection the connection
+     * @throws SQLException sql exception
+     */
     public static void setStatement(Connection connection) throws SQLException {
         statement = connection.createStatement();
     }
 
-    //Returning Statement Object
+    /**
+     * Returning the statement object
+     * @return statement
+     */
     public static Statement getStatement() {
         return statement;
     }

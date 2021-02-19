@@ -1,6 +1,4 @@
 package Utils;
-
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -28,6 +26,10 @@ public class DBConnection {
     private static String username = "U07gew";
     private static String password = "53689021687";
 
+    /**
+     * starts the connection
+     * @return the connection
+     */
     public static Connection startConnection() {
         try {
             Class.forName(driver);
@@ -43,7 +45,10 @@ public class DBConnection {
         return con;
     }
 
-    // Closing the connection
+    /**
+     * closes the connection
+     * @throws SQLException an sqlException
+     */
     public static void closeConnection() throws SQLException {
         try {
             con.close();

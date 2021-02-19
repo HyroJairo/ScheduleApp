@@ -23,6 +23,9 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ResourceBundle;
 
+/**
+ * This is the report controller where it produces reports
+ */
 public class reportController implements Initializable {
 
     @FXML
@@ -51,8 +54,8 @@ public class reportController implements Initializable {
 
     /**
      * This initializes the class
-     * @param url
-     * @param resourceBundle
+     * @param url url
+     * @param resourceBundle a resource bundle
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -151,8 +154,8 @@ public class reportController implements Initializable {
 
     /**
      * This shows a list of appointments based on types and months
-     * @param event
-     * @throws SQLException
+     * @param event an event
+     * @throws SQLException sql exception
      */
     @FXML
     void onActionAppointmentSubmit(ActionEvent event) throws SQLException {
@@ -161,7 +164,6 @@ public class reportController implements Initializable {
 
         if(m == null || t == null) {
             infoBoxError("select a type and a month", "ERROR");
-            return;
         } else {
 
             //Starts the connection to the database
@@ -185,7 +187,7 @@ public class reportController implements Initializable {
                 }
             }
 
-            String howMany = "";
+            String howMany;
             if(count == 0) {
                 howMany = "There are no " + t + " type appointments for the mont of " + m;
             } else if(count == 1) {
@@ -200,7 +202,7 @@ public class reportController implements Initializable {
 
     /**
      * This submits a contact and their appointments
-     * @param event
+     * @param event an event
      */
     @FXML
     void onActionContactSubmit(ActionEvent event) {
@@ -245,7 +247,7 @@ public class reportController implements Initializable {
 
     /**
      * This shows a list of customer's names and their id
-     * @param event
+     * @param event an event
      */
     @FXML
     void onActionCustomerSubmit(ActionEvent event) {
@@ -259,8 +261,8 @@ public class reportController implements Initializable {
 
     /**
      * This logs off and goes straight to the login page
-     * @param event
-     * @throws IOException
+     * @param event an event
+     * @throws IOException an IO exception
      */
     @FXML
     void onActionLogOff(ActionEvent event) throws IOException {
@@ -276,8 +278,8 @@ public class reportController implements Initializable {
 
     /**
      * This goes back the main menu
-     * @param event
-     * @throws IOException
+     * @param event an event
+     * @throws IOException an IO exception
      */
     @FXML
     void onActionBack(ActionEvent event) throws IOException {
@@ -298,7 +300,7 @@ public class reportController implements Initializable {
      * This is an infobox for errors
      *
      * @param infoMessage the message
-     * @param headerText the headertext
+     * @param headerText the header text
      */
     public void infoBoxError(String infoMessage, String headerText) {
         Alert alert = new Alert(Alert.AlertType.ERROR);

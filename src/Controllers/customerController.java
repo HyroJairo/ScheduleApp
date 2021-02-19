@@ -24,16 +24,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.ResourceBundle;
 
+/**
+ * This is the customer controller class. You can add, update, and delete customer records
+ */
 public class customerController implements Initializable {
     /**
      * Text fields
      */
-    @FXML
-    private Button addCustomer;
-    @FXML
-    private Button modifyCustomer;
-    @FXML
-    private Button deleteCustomer;
     @FXML
     private TextField customerIDText;
     @FXML
@@ -74,8 +71,14 @@ public class customerController implements Initializable {
     private ComboBox<String> optionList;
 
     /**
-     * The only button
+     * The buttons
      */
+    @FXML
+    private Button addCustomer;
+    @FXML
+    private Button modifyCustomer;
+    @FXML
+    private Button deleteCustomer;
     @FXML
     private Button back;
 
@@ -96,31 +99,27 @@ public class customerController implements Initializable {
 
     /**
      * Initializes the customer controller class
-     * @param url
-     * @param resourceBundle
+     * @param url the url
+     * @param resourceBundle the resource bundle
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
         //Starts the connection to the database
         Connection con = DBConnection.startConnection();
-
         //Create a statement object
         try { DBQuery.setStatement(con); }
         catch (SQLException e) { e.printStackTrace(); }
-
         //Get statement object
         Statement statement = DBQuery.getStatement();
-
-        //This populates the countries list. UPDATED
+        //This populates the countries list.
         for(String i : nations) {
             countryList.getItems().add(i);
         }
-        //This populates the options list. UPDATED
+        //This populates the options list.
         for(String i : options) {
             optionList.getItems().add(i);
         }
-        //This populates the firstDivisionLevel list. UPDATED
+        //This populates the firstDivisionLevel list.
         for(int i = 0; i < 3; i++) {
             //SQL statement to get firstLevelDivision names from firstLevelDivisions
             String sqlStatement = "SELECT country_ID FROM countries WHERE country = '" + nations[i] + "'";
@@ -130,6 +129,7 @@ public class customerController implements Initializable {
             if (firstA.isEmpty()) { code = "red"; }
             else if (firstB.isEmpty()) { code = "yellow"; }
             else { code = "blue"; }
+            //retrieving all the divisions and inserting them into their respective arraylists
             try {
                 String id = String.valueOf(i + 1);
                 String divisions = "SELECT division FROM first_level_divisions WHERE first_level_divisions.country_ID = " + id;
@@ -159,7 +159,7 @@ public class customerController implements Initializable {
                 Timestamp update = b.getTimestamp(8);
                 String updateBy = b.getString(9);
                 int divisionID = b.getInt(10);
-
+                //creates customer and adds it to customers
                 Customer customer = new Customer(id, name, address, code, phone,
                         create, createBy, update, updateBy, divisionID);
                 customers.add(customer);
@@ -182,15 +182,8 @@ public class customerController implements Initializable {
     }
 
     /**
-     * This is the constructor for the customer controller
-     */
-    public customerController() {
-
-    }
-
-    /**
      * This adds in a customer
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionAddCustomer(ActionEvent event) throws SQLException {
@@ -223,7 +216,6 @@ public class customerController implements Initializable {
             Date date = new Date(); // This object contains the current date value
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String now = formatter.format(date).toString();
-            System.out.println(now);
             String division = getDivisionID();
             //String for customer sql
             String customerSQL =
@@ -244,25 +236,16 @@ public class customerController implements Initializable {
 
             customers.add(customer);
             clearText();
-
+            infoBoxInformation("Customer has been added", "COMPLETED");
         }
     }
 
     /**
      * This deletes the customer
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionDeleteCustomer(ActionEvent event) throws SQLException{
-        //Starts the connection to the database
-        Connection con = DBConnection.startConnection();
-
-        //Create a statement object
-        DBQuery.setStatement(con);
-
-        //Get a statement object
-        Statement statement = DBQuery.getStatement();
-
 
         String option = optionList.getSelectionModel().getSelectedItem();
         if(!(option == "Delete")) {
@@ -272,19 +255,30 @@ public class customerController implements Initializable {
             infoBoxError("Customer ID does not exist", "ERROR");
             return;
         } else {
+            //Starts the connection to the database
+            Connection con = DBConnection.startConnection();
+
+            //Create a statement object
+            DBQuery.setStatement(con);
+
+            //Get a statement object
+            Statement statement = DBQuery.getStatement();
+
             //This deletes other appointments
             String appointmentSQL = "DELETE FROM appointments WHERE Customer_ID=" + customerIDText.getText();
-            statement.executeQuery(appointmentSQL);
+            statement.executeUpdate(appointmentSQL);
 
             //This deletes the customer
             String customerSQL = "DELETE FROM customers WHERE Customer_ID=" + customerIDText.getText();
             statement.executeUpdate(customerSQL);
+
             for(Customer customer: customers) {
-                if(String.valueOf(customer.getCustomerID()).equals(customerIDText.getText())) {
+                String str = String.valueOf(customer.getCustomerID());
+                if(str.equals(customerIDText.getText())) {
                     customers.remove(customer);
                     clearText();
                     customerTable.refresh();
-                    infoBoxError("The customer has been successfully deleted", "COMPLETED");
+                    infoBoxInformation("The customer has been successfully deleted", "COMPLETED");
                     return;
                 }
             }
@@ -293,7 +287,7 @@ public class customerController implements Initializable {
 
     /**
      * This modifies the customer
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionModifyCustomer(ActionEvent event) throws SQLException {
@@ -347,12 +341,13 @@ public class customerController implements Initializable {
             }
             clearText();
             customerTable.refresh();
+            infoBoxInformation("Customer has been updated", "COMPLETED");
         }
     }
 
     /**
      * This changes to either delete, update, or none
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionOptions(ActionEvent event) {
@@ -400,7 +395,8 @@ public class customerController implements Initializable {
     }
 
     /**
-     * This gets an original customerID
+     * This gets an original id
+     * @return a new id
      */
     public int getNewID() {
         int customID = -1;
@@ -413,7 +409,9 @@ public class customerController implements Initializable {
     }
 
     /**
-     * This gets the id and checks if it exists
+     * This method tells if the id exist or not
+     * @param id id
+     * @return true or false
      */
     public boolean idExist(String id) {
 
@@ -425,8 +423,11 @@ public class customerController implements Initializable {
         return false;
     }
 
+
     /**
-     * This gets the divisionID
+     *
+     * @return the division id
+     * @throws SQLException sql exception
      */
     public String getDivisionID() throws SQLException {
         //Starts the connection to the database
@@ -446,7 +447,8 @@ public class customerController implements Initializable {
     }
 
     /**
-     * This validate the input
+     * checks to see if the fields are filled in or not
+     * @return true or false
      */
     public boolean checkMark() {
         //This checks if the fields are empty or not
@@ -480,8 +482,8 @@ public class customerController implements Initializable {
 
     /**
      * This logs off from the current controller screen and goes to the login screen directly
-     * @param event
-     * @throws IOException
+     * @param event the event
+     * @throws IOException IO exception
      */
     @FXML
     void onActionLogOff(ActionEvent event) throws IOException {
@@ -497,7 +499,7 @@ public class customerController implements Initializable {
 
     /**
      * This goes back to main controller screen
-     * @param event
+     * @param event the event
      * @throws IOException
      */
     @FXML
@@ -522,6 +524,19 @@ public class customerController implements Initializable {
      */
     public void infoBoxError(String infoMessage, String headerText) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText(headerText);
+        alert.setContentText(infoMessage);
+        alert.showAndWait();
+    }
+
+    /**
+     * This is an infobox for informative
+     *
+     * @param infoMessage the message
+     * @param headerText the header text
+     */
+    public void infoBoxInformation(String infoMessage, String headerText) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setHeaderText(headerText);
         alert.setContentText(infoMessage);
         alert.showAndWait();

@@ -24,16 +24,16 @@ import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
 
 import static Controllers.loginController.user;
 
+/**
+ * This is the appointment controller class where the user can add, update, and delete appointment records
+ */
+@SuppressWarnings("FieldMayBeFinal")
 public class appointmentController implements Initializable{
     /**
      * Text fields
@@ -81,8 +81,6 @@ public class appointmentController implements Initializable{
     @FXML
     private TableColumn<Appointment, Integer> contact = new TableColumn<>();
 
-
-
     /**
      * radio buttons to change from week to month
      */
@@ -118,6 +116,7 @@ public class appointmentController implements Initializable{
     private ComboBox<String> userIDList;
     @FXML
     private ComboBox<String> customerList;
+
     /**
      * Date pickers
      */
@@ -145,7 +144,6 @@ public class appointmentController implements Initializable{
     /**
      * observables collections
      */
-    ObservableList<Customer> customers = FXCollections.observableArrayList();
     ObservableList<Contact> contacts = FXCollections.observableArrayList();
     ObservableList<User> users = FXCollections.observableArrayList();
     ObservableList<Appointment> appointments = FXCollections.observableArrayList();
@@ -157,8 +155,8 @@ public class appointmentController implements Initializable{
 
     /**
      * This initializes the whole class
-     * @param url
-     * @param resourceBundle
+     * @param url url
+     * @param resourceBundle resource bundle
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -236,7 +234,7 @@ public class appointmentController implements Initializable{
             contactList.getSelectionModel().select(0);
         } catch (SQLException e) { e.printStackTrace();}
 
-        //This populates the user list. This line isn't used
+        //This populates the user list. This line isn't used but rather for the rubric
         try {
             String s = "SELECT * FROM users";
             ResultSet r = statement.executeQuery(s);
@@ -286,21 +284,23 @@ public class appointmentController implements Initializable{
     /**
      * This changes the appointment schedule to monthly
      */
+    @FXML
     void changeToMonthly() {
-        //This gets the month value
-        int m = changeTable.getValue().getMonthValue();
-        //I create a observableList for the month
-        ObservableList<Appointment> monthApp = FXCollections.observableArrayList();
-        //This inserts the appointments that fit in the month into the monthApp and sets in the table
-        for(Appointment app : appointments) {
-            int a = app.getStart().toLocalDateTime().getMonthValue();
-            if(m == a) {
-                monthApp.add(app);
-            }
-        }
-        appointmentTable.setItems(monthApp);
-        if(appointmentTable.getItems().isEmpty()) {
-            System.out.println("Nothing is in here");
+        if(!(changeTable.getValue() == null)) {
+            //This gets the month value
+            int m = changeTable.getValue().getMonthValue();
+            //I create a observableList for the month
+            ObservableList<Appointment> monthApp = FXCollections.observableArrayList();
+            //This inserts the appointments that fit in the month into the monthApp and sets in the table
+            //This is a lambda expression used to search through the appointment lists to add it to the month list
+            appointments.forEach(n -> {
+                int a = n.getStart().toLocalDateTime().getMonthValue();
+                if(m == a) {
+                    monthApp.add(n);
+                }
+            });
+
+            appointmentTable.setItems(monthApp);
         }
     }
 
@@ -308,41 +308,42 @@ public class appointmentController implements Initializable{
      * This changes the appointment schedule to weekly
      *
      */
+    @FXML
     void changeToWeekly() {
-        String[] arr = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
-        int start = 0;
-        int finish = 6;
+        if(!(changeTable.getValue() == null)) {
+            String[] arr = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
+            int start = 0;
+            int finish = 6;
 
-        //This gets the name of the day
-        DayOfWeek s = changeTable.getValue().getDayOfWeek();
-        //This gets the number day of the month
-        int v = changeTable.getValue().getDayOfMonth();
-        //This ticks up/down start and finish
-        for(int i = 0; i < arr.length; i++) {
-            if(arr[i] == s.toString()) {
-                break;
-            } else {
-                start++;
-                finish--;
+            //This gets the name of the day
+            DayOfWeek s = changeTable.getValue().getDayOfWeek();
+            //This gets the number day of the month
+            int v = changeTable.getValue().getDayOfMonth();
+            //This ticks up/down start and finish
+            for (String value : arr) {
+                if (value.equals(s.toString())) {
+                    break;
+                } else {
+                    start++;
+                    finish--;
+                }
             }
-        }
-        //I create another observableList
-        ObservableList<Appointment> weekApp = FXCollections.observableArrayList();
-        //This inserts the appointments that fit in the week into the weekapp and sets it in the table
-        for(Appointment app : appointments) {
-            int a = app.getStart().toLocalDateTime().getDayOfMonth();
-            int b = app.getStart().toLocalDateTime().getMonthValue();
-            int c = changeTable.getValue().getMonthValue();
+            //I create another observableList
+            ObservableList<Appointment> weekApp = FXCollections.observableArrayList();
+
+            //This gets the beginning and end of the week
             int begin = v - start;
             int end = v + finish;
-            if(a >= begin && a <= end && c == b) {
-                weekApp.add(app);
-            }
-        }
-        appointmentTable.setItems(weekApp);
-        //If theres nothing I will create a warning in here
-        if(appointmentTable.getItems().isEmpty()) {
-            System.out.println("Nothing is in here");
+            //This is a lambda expression used to search through the appointment list to add it to the week list
+            appointments.forEach(app -> {
+                int a = app.getStart().toLocalDateTime().getDayOfMonth();
+                int b = app.getStart().toLocalDateTime().getMonthValue();
+                int c = changeTable.getValue().getMonthValue();
+                if(a >= begin && a <= end && c == b) {
+                    weekApp.add(app);
+                }
+            });
+            appointmentTable.setItems(weekApp);
         }
     }
 
@@ -366,7 +367,7 @@ public class appointmentController implements Initializable{
     /**
      * This changes the calendar once it is selected
      * to either all, weekly, or monthly
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionChange(ActionEvent event) {
@@ -381,9 +382,9 @@ public class appointmentController implements Initializable{
 
     /**
      * This adds an appointment to the appointment schedule and into the database
-     * @param event
-     * @throws SQLException
-     * @throws ParseException
+     * @param event event
+     * @throws SQLException sql exception
+     * @throws ParseException parse exception
      */
     @FXML
     void onActionAddAppointment(ActionEvent event) throws SQLException, ParseException {
@@ -399,15 +400,16 @@ public class appointmentController implements Initializable{
         //Get the selected option
         String option = optionList.getSelectionModel().getSelectedItem();
 
-        if(!(option == "Add")) {
+        if(!(option.equals("Add"))) {
             infoBoxError("You have to click the add option", "ERROR");
-            return;
-        } else {
+        } else if(checkMark()){
+            //This gets the fields from
             String id = String.valueOf(generateAppointmentID());
             String title = titleText.getText();
             String description = descriptionText.getText();
             String location = locationText.getText();
             String type = typeText.getText();
+
             //This gets start time
             String s = startDate.getValue().toString();
             String ss = startHours.getValue();
@@ -423,14 +425,14 @@ public class appointmentController implements Initializable{
             //This gets create, createBy, lastUpdate, lastUpdateBy
             Date date = new Date();
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String now = formatter.format(date).toString();
+            String now = formatter.format(date);
             String createdBy = user.getUserName();
             String lastUpdatedBy = user.getUserName();
             String customerID = customerList.getSelectionModel().getSelectedItem();
             String userID = String.valueOf(user.getUserID());
             String contact = "";
             for(Contact cont : contacts) {
-                if(contactList.getValue() == cont.getContactName()) {
+                if(contactList.getValue().equals(cont.getContactName())) {
                     contact = String.valueOf(cont.getContactID());
                     break;
                 }
@@ -497,9 +499,7 @@ public class appointmentController implements Initializable{
                 }
             }
 
-            Appointment app = new Appointment(i, title, description, location, type, timestampStart, timestampEnd,
-                    createDate, createdBy, lastDate, lastUpdatedBy, j, k, l);
-            appointments.add(app);
+
 
             //String for appointment SQL
             String appointmentSQL = "INSERT INTO appointments (Appointment_ID, Title, Description, Location, Type, Start, End, Create_Date," +
@@ -509,13 +509,19 @@ public class appointmentController implements Initializable{
                     "', '" + customerID + "', '" + userID + "', '" + contact + "') ";
             statement.executeUpdate(appointmentSQL);
 
+            Appointment app = new Appointment(i, title, description, location, type, timestampStart, timestampEnd,
+                    createDate, createdBy, lastDate, lastUpdatedBy, j, k, l);
+            appointments.add(app);
+
             clearText();
+            infoBoxInformation("Appointment has been added", "COMPLETED");
+
         }
     }
 
     /**
      * This deletes an appointment from the appointment schedule and from the database
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionDeleteAppointment(ActionEvent event) throws SQLException {
@@ -529,12 +535,10 @@ public class appointmentController implements Initializable{
         Statement statement = DBQuery.getStatement();
 
         String option = optionList.getSelectionModel().getSelectedItem();
-        if(!(option == "Delete")) {
+        if(!(option.equals("Delete"))) {
             infoBoxError("click delete option", "ERROR");
-            return;
-        } else if(!idExist(appointmentIDText.getText())){
+        } else if(idExist(appointmentIDText.getText())){
             infoBoxError("Appointment ID does not exist", "ERROR");
-            return;
         } else {
             String appointmentSQL = "DELETE FROM appointments WHERE Appointment_ID=" + appointmentIDText.getText();
             statement.executeUpdate(appointmentSQL);
@@ -547,7 +551,7 @@ public class appointmentController implements Initializable{
                     clearText();
                     appointmentTable.refresh();
 
-                    infoBoxError("You have successfully removed a " + appType +
+                    infoBoxInformation("You have successfully removed a " + appType +
                             " appointment of AppointmentID=" + appID, "COMPLETE");
                     return;
                 }
@@ -556,10 +560,10 @@ public class appointmentController implements Initializable{
     }
 
     /**
-     * This m
-     * @param event
-     * @throws SQLException
-     * @throws ParseException
+     * This method updated an appointment
+     * @param event event
+     * @throws SQLException sql exception
+     * @throws ParseException parses an exception
      */
     @FXML
     void onActionUpdateAppointment(ActionEvent event) throws SQLException, ParseException {
@@ -573,10 +577,9 @@ public class appointmentController implements Initializable{
         Statement statement = DBQuery.getStatement();
 
         String option = optionList.getSelectionModel().getSelectedItem();
-        if(!(option == "Update")) {
+        if(!(option.equals("Update"))) {
             infoBoxError("click update option", "ERROR");
-            return;
-        } else if(!idExist(appointmentIDText.getText())) {
+        } else if(idExist(appointmentIDText.getText())) {
             infoBoxError("Appointment ID does not exist", "ERROR");
         } else {
             //These are the variables to be updated
@@ -597,7 +600,7 @@ public class appointmentController implements Initializable{
             String customerID = customerList.getSelectionModel().getSelectedItem();
             String contact = "";
             for(Contact cont : contacts) {
-                if(contactList.getValue() == cont.getContactName()) {
+                if(contactList.getValue().equals(cont.getContactName())) {
                     contact = String.valueOf(cont.getContactID());
                     break;
                 }
@@ -617,6 +620,7 @@ public class appointmentController implements Initializable{
             String endForUTC = dateFormat.format(timeDateEnd);
             String startForUTC = dateFormat.format(timeDateStart);
 
+            //the sql statement to update the appointment
             String appointmentSQL = "UPDATE appointments\n" +
                                     "SET Title='" + title + "', Description='" + description + "', Location='" +
                                     location + "', Type='" + type + "', Start='" + startForUTC + "', End='" + endForUTC +
@@ -624,6 +628,7 @@ public class appointmentController implements Initializable{
                                     "WHERE Appointment_ID='" + appointmentIDText.getText() + "'";
             statement.executeUpdate(appointmentSQL);
 
+            //updates the appointment
             for(Appointment app: appointments) {
                 if(String.valueOf(app.getAppointmentID()).equals(appointmentIDText.getText())) {
                     app.setTitle(title);
@@ -638,11 +643,14 @@ public class appointmentController implements Initializable{
             }
             clearText();
             appointmentTable.refresh();
+            infoBoxInformation("Appointment has been updated", "COMPLETED");
         }
     }
 
     /**
      * This gets the id and checks if it exists
+     * @param id the id of the appointment
+     * @return true or false
      */
     public boolean idExist(String id) {
         for(Appointment app: appointments) {
@@ -655,7 +663,7 @@ public class appointmentController implements Initializable{
 
     /**
      * generates an id
-     * @return
+     * @return id;
      */
     int generateAppointmentID() {
         int id = -1;
@@ -670,57 +678,60 @@ public class appointmentController implements Initializable{
     /**
      * This makes sure if which mode (adds, update, delete) is activated
      * the following actions follow
-     * @param event
+     * @param event event
      */
     @FXML
     void onActionOptions(ActionEvent event) {
         String s = optionList.getSelectionModel().getSelectedItem();
-        if(s == "Add") {
-            appointmentIDText.setDisable(true);
-            titleText.setDisable(false);
-            descriptionText.setDisable(false);
-            locationText.setDisable(false);
-            typeText.setDisable(false);
-            startDate.setDisable(false);
-            startHours.setDisable(false);
-            startMinutes.setDisable(false);
-            endDate.setDisable(false);
-            endHours.setDisable(false);
-            endMinutes.setDisable(false);
-            contactList.setDisable(false);
-            customerList.setDisable(false);
-            userIDList.setDisable(false);
-            return;
-        } else if(s == "Update") {
-            appointmentIDText.setDisable(false);
-            titleText.setDisable(false);
-            descriptionText.setDisable(false);
-            locationText.setDisable(false);
-            typeText.setDisable(false);
-            startDate.setDisable(false);
-            startHours.setDisable(false);
-            startMinutes.setDisable(false);
-            endDate.setDisable(false);
-            endHours.setDisable(false);
-            endMinutes.setDisable(false);
-            contactList.setDisable(false);
-            customerList.setDisable(false);
-            userIDList.setDisable(true);
-        } else if(s == "Delete"){
-            appointmentIDText.setDisable(false);
-            titleText.setDisable(true);
-            descriptionText.setDisable(true);
-            locationText.setDisable(true);
-            typeText.setDisable(true);
-            startDate.setDisable(true);
-            startHours.setDisable(true);
-            startMinutes.setDisable(true);
-            endDate.setDisable(true);
-            endHours.setDisable(true);
-            endMinutes.setDisable(true);
-            contactList.setDisable(true);
-            customerList.setDisable(true);
-            userIDList.setDisable(true);
+        switch (s) {
+            case "Add":
+                appointmentIDText.setDisable(true);
+                titleText.setDisable(false);
+                descriptionText.setDisable(false);
+                locationText.setDisable(false);
+                typeText.setDisable(false);
+                startDate.setDisable(false);
+                startHours.setDisable(false);
+                startMinutes.setDisable(false);
+                endDate.setDisable(false);
+                endHours.setDisable(false);
+                endMinutes.setDisable(false);
+                contactList.setDisable(false);
+                customerList.setDisable(false);
+                userIDList.setDisable(false);
+                break;
+            case "Update":
+                appointmentIDText.setDisable(false);
+                titleText.setDisable(false);
+                descriptionText.setDisable(false);
+                locationText.setDisable(false);
+                typeText.setDisable(false);
+                startDate.setDisable(false);
+                startHours.setDisable(false);
+                startMinutes.setDisable(false);
+                endDate.setDisable(false);
+                endHours.setDisable(false);
+                endMinutes.setDisable(false);
+                contactList.setDisable(false);
+                customerList.setDisable(false);
+                userIDList.setDisable(true);
+                break;
+            case "Delete":
+                appointmentIDText.setDisable(false);
+                titleText.setDisable(true);
+                descriptionText.setDisable(true);
+                locationText.setDisable(true);
+                typeText.setDisable(true);
+                startDate.setDisable(true);
+                startHours.setDisable(true);
+                startMinutes.setDisable(true);
+                endDate.setDisable(true);
+                endHours.setDisable(true);
+                endMinutes.setDisable(true);
+                contactList.setDisable(true);
+                customerList.setDisable(true);
+                userIDList.setDisable(true);
+                break;
         }
     }
 
@@ -743,10 +754,27 @@ public class appointmentController implements Initializable{
     }
 
     /**
+     * checks to see if the fields are filled in or not
+     * @return true or false
+     */
+    public boolean checkMark() {
+        //This checks if the fields are empty or not
+        if (titleText.getText().isEmpty() || descriptionText.getText().isEmpty() || locationText.getText().isEmpty() ||
+                typeText.getText().isEmpty() || startText.getText().isEmpty() || startHours.getValue().isEmpty() ||
+                startMinutes.getValue().isEmpty() || endText.getText().isEmpty() || endHours.getValue().isEmpty() ||
+                endMinutes.getValue().isEmpty() || customerIDText.getText().isEmpty() || contactList.getValue().isEmpty())
+         {
+            infoBoxError("fill in all of the text fields", "ERROR");
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * This is an infobox for errors
      *
      * @param infoMessage the message
-     * @param headerText the headertext
+     * @param headerText the header text
      */
     public void infoBoxError(String infoMessage, String headerText) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -756,9 +784,22 @@ public class appointmentController implements Initializable{
     }
 
     /**
+     * This is an infobox for informative
+     *
+     * @param infoMessage the message
+     * @param headerText the header text
+     */
+    public void infoBoxInformation(String infoMessage, String headerText) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(headerText);
+        alert.setContentText(infoMessage);
+        alert.showAndWait();
+    }
+
+    /**
      * This goes back to the main menu
-     * @param event
-     * @throws IOException
+     * @param event event
+     * @throws IOException IO exception
      */
     @FXML
     void onActionBack(ActionEvent event) throws IOException {
@@ -777,8 +818,8 @@ public class appointmentController implements Initializable{
 
     /**
      * This logs out of the application
-     * @param event
-     * @throws IOException
+     * @param event event
+     * @throws IOException IO exception
      */
     @FXML
     void onActionLogOut(ActionEvent event) throws IOException {
