@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.*;
 
 /**
+ * @author max morales
  * This is the log in class. You enter username and password to enter the main menu
  */
 public class loginController implements Initializable {
@@ -224,6 +225,7 @@ public class loginController implements Initializable {
 
     /**
      * This checks if the user has an appointment within 15 minutes of successfully logging in
+     * @throws SQLException sql Exception
      */
     public void appointmentIn15() throws SQLException {
         //Starts the connection

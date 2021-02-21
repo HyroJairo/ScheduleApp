@@ -59,7 +59,7 @@
                   <Font size="20.0" />
                </font>
             </Label>
-            <TextField fx:id="customerIDText" disable="true" layoutX="194.0" layoutY="117.0" promptText="choose an option         ---&gt;" />
+            <TextField fx:id="customerIDText" disable="true" layoutX="194.0" layoutY="117.0" onAction="#onActionDisplay" promptText="choose an option         ---&gt;" />
             <Label layoutX="51.0" layoutY="117.0" text="Customer ID">
                <font>
                   <Font size="20.0" />

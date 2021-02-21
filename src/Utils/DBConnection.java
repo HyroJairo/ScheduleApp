@@ -3,9 +3,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import static java.lang.Class.forName;
-
 /**
+ * @author max morales
  * This is the database driver connection class
  */
 public class DBConnection {

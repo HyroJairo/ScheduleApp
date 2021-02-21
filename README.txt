@@ -5,7 +5,7 @@ NAME: Schedule Application
 PURPOSE:  An application that displays the appointments and where you can add, update, delete customers and add, update,
 and delete appointments
 
-AUTHOR: Max Diaz-Ortiz
+AUTHOR: Max Diaz-Ortiz (other name Max Morales)
 
 CONTACT INFORMATION: jdiazor@wgu.edu
 

@@ -3,6 +3,7 @@ package Model;
 import java.util.Date;
 
 /**
+ * @author max morales
  * This is the User class
  */
 public class User {

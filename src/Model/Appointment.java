@@ -3,6 +3,7 @@ package Model;
 import java.sql.Timestamp;
 
 /**
+ * @author max morales
  * This is the Appointment class
  */
 public class Appointment {

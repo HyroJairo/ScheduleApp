@@ -1,6 +1,7 @@
 package Model;
 
 /**
+ * @author max morales
  * This is the Contact class
  */
 public class Contact {

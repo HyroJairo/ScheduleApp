@@ -8,13 +8,20 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
-import java.util.Locale;
 
+/**
+ * @author max morales
+ * This the main class that starts the login screen
+ */
 public class Main extends Application {
 
+    /**
+     *
+     * @param primaryStage the stage
+     * @throws Exception an exception
+     */
     @Override
     public void start(Stage primaryStage) throws Exception{
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("../Views/login.fxml"));
         Controllers.loginController controller = new Controllers.loginController();
         loader.setController(controller);
@@ -23,18 +30,13 @@ public class Main extends Application {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
-
-//        Locale currentLocale = Locale.getDefault();
-//        System.out.println(currentLocale.getDisplayLanguage());
-//        System.out.println(currentLocale.getDisplayCountry());
-//
-//        System.out.println(currentLocale.getLanguage());
-//        System.out.println(currentLocale.getCountry());
-//
-//        System.out.println(System.getProperty("user.country"));
-//        System.out.println(System.getProperty("user.language"));
     }
 
+    /**
+     *
+     * @param args the arguments
+     * @throws SQLException the sql exception
+     */
     public static void main(String[] args) throws SQLException {
         DBConnection.startConnection();
         launch(args);

@@ -4,6 +4,7 @@ package Model;
 import java.sql.Timestamp;
 
 /**
+ * @author max morales
  * The is the Customer class
  */
 public class Customer {

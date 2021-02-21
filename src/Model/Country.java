@@ -6,6 +6,7 @@ import javafx.collections.ObservableList;
 import java.util.Date;
 
 /**
+ * @author max morales
  * This is the Country class
  */
 public class Country {

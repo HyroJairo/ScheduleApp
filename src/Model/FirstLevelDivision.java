@@ -6,6 +6,7 @@ import javafx.collections.ObservableList;
 import java.util.Date;
 
 /**
+ * @author max morales
  * This is the FirstLevelDivision class
  */
 public class FirstLevelDivision {

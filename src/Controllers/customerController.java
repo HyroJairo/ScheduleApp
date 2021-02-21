@@ -14,6 +14,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.InputMethodEvent;
 import javafx.stage.Stage;
 import static Controllers.loginController.user;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.Date;
 import java.util.ResourceBundle;
 
 /**
+ * @author max morales
  * This is the customer controller class. You can add, update, and delete customer records
  */
 public class customerController implements Initializable {
@@ -179,6 +181,9 @@ public class customerController implements Initializable {
             phone.setCellValueFactory(new PropertyValueFactory<>("phone"));
             divisionID.setCellValueFactory(new PropertyValueFactory<>("divisionID"));
         }
+
+        //This is a test
+
     }
 
     /**
@@ -187,24 +192,22 @@ public class customerController implements Initializable {
      */
     @FXML
     void onActionAddCustomer(ActionEvent event) throws SQLException {
-        //Starts the connection to the database
-        Connection con = DBConnection.startConnection();
 
-        //Create a statement object
-        try {
-            DBQuery.setStatement(con);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        //Get statement object
-        Statement statement = DBQuery.getStatement();
 
         String option = optionList.getSelectionModel().getSelectedItem();
         if(!(option == "Add")) {
             infoBoxError("click add option", "ERROR");
             return;
         } else if(checkMark()) {
+            //Starts the connection to the database
+            Connection con = DBConnection.startConnection();
+
+            //Create a statement object
+            DBQuery.setStatement(con);
+
+            //Get statement object
+            Statement statement = DBQuery.getStatement();
+
             //Takes in the variables
             String id = String.valueOf(getNewID());
             String name = nameText.getText();
@@ -291,15 +294,6 @@ public class customerController implements Initializable {
      */
     @FXML
     void onActionModifyCustomer(ActionEvent event) throws SQLException {
-        //Starts the connection to the database
-        Connection con = DBConnection.startConnection();
-
-        //Create a statement object
-        DBQuery.setStatement(con);
-
-        //Get a statement object
-        Statement statement = DBQuery.getStatement();
-
         String option = optionList.getSelectionModel().getSelectedItem();
         if(!(option == "Update")) {
             infoBoxError("click update option", "ERROR");
@@ -307,7 +301,15 @@ public class customerController implements Initializable {
         } else if(!idExist(customerIDText.getText())) {
             infoBoxError("Customer ID does not exist", "ERROR");
             return;
-        } else {
+        } else if(checkMark()){
+            //Starts the connection to the database
+            Connection con = DBConnection.startConnection();
+
+            //Create a statement object
+            DBQuery.setStatement(con);
+
+            //Get a statement object
+            Statement statement = DBQuery.getStatement();
             //These are the variables to be updated
             String name = nameText.getText();
             String address = addressText.getText();
@@ -351,16 +353,19 @@ public class customerController implements Initializable {
      */
     @FXML
     void onActionOptions(ActionEvent event) {
+
         if(optionList.getSelectionModel().getSelectedItem() == "Update") {
+            customerIDText.setPromptText("Type ID and enter");
             customerIDText.setDisable(false);
-            nameText.setDisable(false);
-            postalCodeText.setDisable(false);
-            addressText.setDisable(false);
-            phoneNumberText.setDisable(false);
-            countryList.setDisable(false);
-            firstLevelDivisionList.setDisable(false);
+            nameText.setDisable(true);
+            postalCodeText.setDisable(true);
+            addressText.setDisable(true);
+            phoneNumberText.setDisable(true);
+            countryList.setDisable(true);
+            firstLevelDivisionList.setDisable(true);
             clearText();
         }else if(optionList.getSelectionModel().getSelectedItem() == "Delete") {
+            customerIDText.setPromptText("Type ID and enter");
             customerIDText.setDisable(false);
             nameText.setDisable(true);
             postalCodeText.setDisable(true);
@@ -370,6 +375,7 @@ public class customerController implements Initializable {
             firstLevelDivisionList.setDisable(true);
             clearText();
         } else {
+            customerIDText.setPromptText("Customer ID disabled");
             customerIDText.setDisable(true);
             nameText.setDisable(false);
             postalCodeText.setDisable(false);
@@ -379,6 +385,51 @@ public class customerController implements Initializable {
             firstLevelDivisionList.setDisable(false);
             clearText();
         }
+    }
+
+    /**
+     * Displays the customer's information
+     * @param event event
+     * @throws SQLException sql exception
+     */
+    @FXML
+    void onActionDisplay(ActionEvent event) throws SQLException {
+        String id = customerIDText.getText().trim();
+
+        if(idExist(id)) {
+            customerIDText.setDisable(true);
+            nameText.setDisable(false);
+            postalCodeText.setDisable(false);
+            addressText.setDisable(false);
+            phoneNumberText.setDisable(false);
+            countryList.setDisable(false);
+            firstLevelDivisionList.setDisable(false);
+        }
+        for(Customer cust : customers) {
+            String custID = String.valueOf(cust.getCustomerID());
+            if(custID.equals(id)) {
+                nameText.setText(cust.getCustomerName());
+                postalCodeText.setText(cust.getPostalCode());
+                addressText.setText(cust.getAddress());
+                phoneNumberText.setText(cust.getPhone());
+                //Starts the connection to the database
+                Connection con = DBConnection.startConnection();
+                //Create a statement object
+                DBQuery.setStatement(con);
+                //Get a statement object
+                Statement statement = DBQuery.getStatement();
+                String sql = "SELECT Division, country_ID FROM first_level_divisions WHERE Division_ID = "
+                        + cust.getDivisionID();
+                ResultSet r = statement.executeQuery(sql);
+                while(r.next()) {
+                    firstLevelDivisionList.setPromptText(r.getString(1));
+                    firstLevelDivisionList.getSelectionModel().select(r.getString(1));
+                    countryList.getSelectionModel().select(r.getInt(2) - 1);
+                    return;
+                }
+            }
+        }
+        return;
     }
 
     /**
@@ -422,7 +473,6 @@ public class customerController implements Initializable {
         }
         return false;
     }
-
 
     /**
      *

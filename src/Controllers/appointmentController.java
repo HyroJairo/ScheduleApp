@@ -24,6 +24,7 @@ import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
@@ -31,6 +32,7 @@ import java.util.TimeZone;
 import static Controllers.loginController.user;
 
 /**
+ * @author max morales
  * This is the appointment controller class where the user can add, update, and delete appointment records
  */
 @SuppressWarnings("FieldMayBeFinal")
@@ -231,7 +233,6 @@ public class appointmentController implements Initializable{
             for(Contact i : contacts) {
                 contactList.getItems().add(i.getContactName());
             }
-            contactList.getSelectionModel().select(0);
         } catch (SQLException e) { e.printStackTrace();}
 
         //This populates the user list. This line isn't used but rather for the rubric
@@ -348,7 +349,7 @@ public class appointmentController implements Initializable{
     }
 
     /**
-     * This changes the appointment schedule to all
+     * This changes the appointment schedule to show every appointments in the table
      */
     @FXML
     void changeToAll() {
@@ -388,21 +389,21 @@ public class appointmentController implements Initializable{
      */
     @FXML
     void onActionAddAppointment(ActionEvent event) throws SQLException, ParseException {
-        //Starts the connection to the database
-        Connection con = DBConnection.startConnection();
-
-        //Create a statement object
-        DBQuery.setStatement(con);
-
-        //Get statement object
-        Statement statement = DBQuery.getStatement();
-
         //Get the selected option
         String option = optionList.getSelectionModel().getSelectedItem();
 
-        if(!(option.equals("Add"))) {
+        if(!(option == "Add")) {
             infoBoxError("You have to click the add option", "ERROR");
         } else if(checkMark()){
+            //Starts the connection to the database
+            Connection con = DBConnection.startConnection();
+
+            //Create a statement object
+            DBQuery.setStatement(con);
+
+            //Get statement object
+            Statement statement = DBQuery.getStatement();
+
             //This gets the fields from
             String id = String.valueOf(generateAppointmentID());
             String title = titleText.getText();
@@ -464,7 +465,7 @@ public class appointmentController implements Initializable{
             int officeEnd = Integer.parseInt(forOfficeEnd);
 
             //If statement that only lets time continue after 8:00am and before 10:pm
-            if(officeStart < 8 || officeEnd > 22) {
+            if(officeStart < 8 || officeStart > 22 || officeEnd < 8 || officeEnd > 22) {
                 infoBoxError("Appointments can only be made between 8:00 am and 10 pm EST", "ERROR");
                 return;
             }
@@ -472,10 +473,12 @@ public class appointmentController implements Initializable{
             //This makes sure if the appoint times makes sense with one another
             if(timestampStart.after(timestampEnd)) {
                 infoBoxError("end date can't be before start date", "ERROR");
+                return;
             }
             Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
             if(timestampStart.before(timestampNow)) {
                 infoBoxError("start date can't be before current date", "ERROR");
+                return;
             }
 
 
@@ -486,16 +489,18 @@ public class appointmentController implements Initializable{
 
             //This checks for conflicting schedule among the customers;
             for(Appointment app : appointments) {
-                if(app.getCustomerID() == j) {
-                    if(app.getEnd().after(timestampStart) && app.getStart().before(timeDateStart)) {
-                        infoBoxError("Conflicting schedule for customerID: " +
-                                app.getCustomerID(), "ERROR");
-                        return;
-                    } else if(app.getStart().before(timeDateEnd) && app.getEnd().after(timeDateEnd)) {
-                        infoBoxError("Conflicting schedule for customerID: " +
-                                app.getCustomerID(), "ERROR");
-                        return;
-                    }
+                if(app.getEnd().after(timestampStart) && app.getStart().before(timeDateStart)) {
+                    infoBoxError("Conflicting schedule for with appointmentID: " +
+                            app.getAppointmentID(), "ERROR");
+                    return;
+                } else if(app.getStart().before(timeDateEnd) && app.getEnd().after(timeDateEnd)) {
+                    infoBoxError("Conflicting schedule for appointmentID: " +
+                            app.getAppointmentID(), "ERROR");
+                    return;
+                } else if(app.getStart().equals(timestampStart) || app.getEnd().equals(timestampEnd)) {
+                    infoBoxError("Conflicting schedule for appointmentID: " +
+                            app.getAppointmentID(), "ERROR");
+                    return;
                 }
             }
 
@@ -525,21 +530,23 @@ public class appointmentController implements Initializable{
      */
     @FXML
     void onActionDeleteAppointment(ActionEvent event) throws SQLException {
-        //Starts the connection to the database
-        Connection con = DBConnection.startConnection();
 
-        //Create a statement object
-        DBQuery.setStatement(con);
-
-        //Get a statement object
-        Statement statement = DBQuery.getStatement();
 
         String option = optionList.getSelectionModel().getSelectedItem();
-        if(!(option.equals("Delete"))) {
+        if(!(option == "Delete")) {
             infoBoxError("click delete option", "ERROR");
-        } else if(idExist(appointmentIDText.getText())){
+        } else if(!idExist(appointmentIDText.getText())){
             infoBoxError("Appointment ID does not exist", "ERROR");
         } else {
+            //Starts the connection to the database
+            Connection con = DBConnection.startConnection();
+
+            //Create a statement object
+            DBQuery.setStatement(con);
+
+            //Get a statement object
+            Statement statement = DBQuery.getStatement();
+
             String appointmentSQL = "DELETE FROM appointments WHERE Appointment_ID=" + appointmentIDText.getText();
             statement.executeUpdate(appointmentSQL);
 
@@ -567,21 +574,21 @@ public class appointmentController implements Initializable{
      */
     @FXML
     void onActionUpdateAppointment(ActionEvent event) throws SQLException, ParseException {
-        //Starts the connection to the database
-        Connection con = DBConnection.startConnection();
-
-        //Create a statement object
-        DBQuery.setStatement(con);
-
-        //Get a statement object
-        Statement statement = DBQuery.getStatement();
-
         String option = optionList.getSelectionModel().getSelectedItem();
-        if(!(option.equals("Update"))) {
+        if(!(option == "Update")) {
             infoBoxError("click update option", "ERROR");
-        } else if(idExist(appointmentIDText.getText())) {
+        } else if(!idExist(appointmentIDText.getText())) {
             infoBoxError("Appointment ID does not exist", "ERROR");
-        } else {
+        } else if(checkMark()){
+            //Starts the connection to the database
+            Connection con = DBConnection.startConnection();
+
+            //Create a statement object
+            DBQuery.setStatement(con);
+
+            //Get a statement object
+            Statement statement = DBQuery.getStatement();
+
             //These are the variables to be updated
             String title = titleText.getText();
             String description = descriptionText.getText();
@@ -685,6 +692,7 @@ public class appointmentController implements Initializable{
         String s = optionList.getSelectionModel().getSelectedItem();
         switch (s) {
             case "Add":
+                appointmentIDText.setPromptText("ID disabled");
                 appointmentIDText.setDisable(true);
                 titleText.setDisable(false);
                 descriptionText.setDisable(false);
@@ -698,25 +706,11 @@ public class appointmentController implements Initializable{
                 endMinutes.setDisable(false);
                 contactList.setDisable(false);
                 customerList.setDisable(false);
-                userIDList.setDisable(false);
+                userIDList.setDisable(true);
+                clearText();
                 break;
             case "Update":
-                appointmentIDText.setDisable(false);
-                titleText.setDisable(false);
-                descriptionText.setDisable(false);
-                locationText.setDisable(false);
-                typeText.setDisable(false);
-                startDate.setDisable(false);
-                startHours.setDisable(false);
-                startMinutes.setDisable(false);
-                endDate.setDisable(false);
-                endHours.setDisable(false);
-                endMinutes.setDisable(false);
-                contactList.setDisable(false);
-                customerList.setDisable(false);
-                userIDList.setDisable(true);
-                break;
-            case "Delete":
+                appointmentIDText.setPromptText("Type ID and enter");
                 appointmentIDText.setDisable(false);
                 titleText.setDisable(true);
                 descriptionText.setDisable(true);
@@ -731,9 +725,107 @@ public class appointmentController implements Initializable{
                 contactList.setDisable(true);
                 customerList.setDisable(true);
                 userIDList.setDisable(true);
+                clearText();
+                break;
+            case "Delete":
+                appointmentIDText.setPromptText("Type ID and enter");
+                appointmentIDText.setDisable(false);
+                titleText.setDisable(true);
+                descriptionText.setDisable(true);
+                locationText.setDisable(true);
+                typeText.setDisable(true);
+                startDate.setDisable(true);
+                startHours.setDisable(true);
+                startMinutes.setDisable(true);
+                endDate.setDisable(true);
+                endHours.setDisable(true);
+                endMinutes.setDisable(true);
+                contactList.setDisable(true);
+                customerList.setDisable(true);
+                userIDList.setDisable(true);
+                clearText();
                 break;
         }
     }
+
+    /**
+     * Displays the customer's information
+     * @param event event
+     * @throws SQLException sql exception
+     */
+    @FXML
+    void onActionDisplay(ActionEvent event) throws SQLException {
+        String id = appointmentIDText.getText().trim();
+        String option = optionList.getSelectionModel().getSelectedItem();
+
+        //This disables or enables the fields
+        if(idExist(id)) {
+            if(option == "Update") {
+                titleText.setDisable(false);
+                descriptionText.setDisable(false);
+                locationText.setDisable(false);
+                typeText.setDisable(false);
+                startDate.setDisable(false);
+                startHours.setDisable(false);
+                startMinutes.setDisable(false);
+                endDate.setDisable(false);
+                endHours.setDisable(false);
+                endMinutes.setDisable(false);
+                contactList.setDisable(false);
+                customerList.setDisable(false);
+                userIDList.setDisable(true);
+            }
+            if(option == "Delete") {
+                titleText.setDisable(true);
+                descriptionText.setDisable(true);
+                locationText.setDisable(true);
+                typeText.setDisable(true);
+                startDate.setDisable(true);
+                startHours.setDisable(true);
+                startMinutes.setDisable(true);
+                endDate.setDisable(true);
+                endHours.setDisable(true);
+                endMinutes.setDisable(true);
+                contactList.setDisable(true);
+                customerList.setDisable(true);
+                userIDList.setDisable(true);
+            }
+            for(Appointment app : appointments) {
+                String custID = String.valueOf(app.getAppointmentID());
+
+                if(custID.equals(id)) {
+                    //I take the substrings of the start and end timestamps
+                    String start = app.getStart().toString().substring(0, 10);
+                    String shours = app.getStart().toString().substring(11, 13);
+                    String sminutes = app.getStart().toString().substring(14, 16);
+
+                    String end = app.getEnd().toString().substring(0, 10);
+                    String ehours = app.getEnd().toString().substring(11, 13);
+                    String eminutes = app.getEnd().toString().substring(14, 16);
+
+                    //Sets the textfields with the respective values
+                    titleText.setText(app.getTitle());
+                    descriptionText.setText(app.getDescription());
+                    locationText.setText(app.getLocation());
+                    typeText.setText(app.getType());
+                    startDate.setValue(app.getStart().toLocalDateTime().toLocalDate());
+                    startHours.setValue(shours);
+                    startMinutes.setValue(sminutes);
+                    endDate.setValue(app.getEnd().toLocalDateTime().toLocalDate());
+                    endHours.setValue(ehours);
+                    endMinutes.setValue(eminutes);
+                    customerList.getSelectionModel().select(String.valueOf(app.getCustomerID()));
+                    for(Contact con : contacts) {
+                        int j = app.getContact();
+                        if(con.getContactID() == j) {
+                            contactList.getSelectionModel().select(con.getContactName());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * This clears the table and whatnot
@@ -750,7 +842,8 @@ public class appointmentController implements Initializable{
         endMinutes.getSelectionModel().clearSelection();
         customerList.getSelectionModel().clearSelection();
         contactList.getSelectionModel().clearSelection();
-        startDate.setValue(null);
+
+
     }
 
     /**
@@ -760,9 +853,9 @@ public class appointmentController implements Initializable{
     public boolean checkMark() {
         //This checks if the fields are empty or not
         if (titleText.getText().isEmpty() || descriptionText.getText().isEmpty() || locationText.getText().isEmpty() ||
-                typeText.getText().isEmpty() || startText.getText().isEmpty() || startHours.getValue().isEmpty() ||
-                startMinutes.getValue().isEmpty() || endText.getText().isEmpty() || endHours.getValue().isEmpty() ||
-                endMinutes.getValue().isEmpty() || customerIDText.getText().isEmpty() || contactList.getValue().isEmpty())
+                typeText.getText().isEmpty() || startDate.getValue() == null || startHours.getValue().isEmpty() ||
+                startMinutes.getValue().isEmpty() || endDate.getValue() == null || endHours.getValue().isEmpty() ||
+                endMinutes.getValue().isEmpty() || customerList.getValue().isEmpty() || contactList.getValue().isEmpty())
          {
             infoBoxError("fill in all of the text fields", "ERROR");
             return false;

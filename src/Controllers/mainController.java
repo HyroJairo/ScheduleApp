@@ -23,6 +23,7 @@ import java.time.DayOfWeek;
 import java.util.ResourceBundle;
 
 /**
+ * @author max morales
  * This is the main controller. It shows the appointments as well as directing you to
  * the customer, appointment, and report screens
  */
